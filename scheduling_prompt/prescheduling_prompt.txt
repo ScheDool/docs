@@ -1,0 +1,72 @@
+# School Timetable Pre-Scheduling Instructions
+
+Your task in this step is to create a pre-schedule for all fixed slots before the main timetable generation.  
+This pre-schedule defines all non-negotiable (pre-placed, unavailable, scout, and elective) slots for student classes, teachers, and rooms.
+
+---
+
+## Step 1: Generate Empty Schedules
+- Read Sheet 4: Period (คาบเรียน) for the time slots.
+- Use it to generate empty schedules for:
+  - All student classes
+  - All internal teachers
+  - All external teachers
+  - All rooms
+- The empty schedules should follow the same structure as the input:
+  - Rows represent weekdays (Monday–Friday)
+  - Columns represent periods (with the exact period names from the sheet, e.g., “Morning Break”, “Lunch”)
+- At this stage, all slots are unassigned.
+
+---
+
+## Step 2: Apply Pre-Placed Slots
+- From Sheet 4, locate all rows as Pre-place slots.
+- For each pre-placed slot:
+  - Apply it to the related student classes.
+  - If `apply_to = All`, apply that slot to all student classes and teachers.
+
+---
+
+## Step 3: Mark Teacher Availability
+- Open Sheet 3: Teacher (ครู).
+
+### For Internal Teachers:
+- Read the `unavailable_slots` column.
+- Mark all listed slots as unavailable in their schedule.
+- These unavailable slots must also be treated as occupied when checking for overlaps.
+
+### For External Teachers:
+- Read the `available_slots` column.
+- Mark all slots except those listed as unavailable.
+
+---
+
+## Step 4: Assign Scout (ลูกเสือ) Sessions
+- Read Sheet 7: Scout (ลูกเสือ).
+
+For each level:
+- ลูกเสือ ม.1 (Scout M.1) → Find the corresponding teacher(s) listed under this column.
+  - Mark all Scout M.1 slots (as defined in Sheet 4) in their schedules.
+- Repeat the same for:
+  - ลูกเสือ ม.2 (Scout M.2)
+  - ลูกเสือ ม.3 (Scout M.3)
+
+---
+
+## Step 5: Schedule Elective Courses
+- Read Sheet 2: Elective (วิชาเลือก).
+
+For each elective subject:
+1. Identify the teacher assigned to it.
+2. Locate the elective slots (defined in Sheet 4).
+3. Schedule the elective course in:
+   - The teacher’s schedule
+   - The corresponding class’s schedule
+   - The room’s schedule
+4. Set the value in the assigned slots to 1 to mark the elective course.
+5. Ensure all schedules remain conflict-free across teachers, rooms, and classes.
+
+---
+
+✅ Goal:  
+After completing these steps, you should have a fully populated pre-schedule that includes all fixed slots and unavailabilities, ready for the next phase of automated timetable generation.
