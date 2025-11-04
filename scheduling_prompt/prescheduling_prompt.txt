@@ -6,25 +6,57 @@ This pre-schedule defines all non-negotiable (pre-placed, unavailable, scout, an
 ---
 
 ## Step 1: Generate Empty Schedules
-- Read Sheet 4: Period (คาบเรียน) for the time slots.
-- Use it to generate empty schedules for:
-  - All student classes
-  - All internal teachers
-  - All external teachers
-  - All rooms
-- The empty schedules should follow the same structure as the input:
-  - Rows represent weekdays (Monday–Friday)
-  - Columns represent periods (with the exact period names from the sheet, e.g., “Morning Break”, “Lunch”)
-- At this stage, all slots are unassigned.
-
+Read the School Period section from the sheet 4: Period (คาบเรียน), you must NOT include data in Pre-place slots section in this step.
+Using this data, generate an empty weekly timetable grid:
+**Grid format rules**
+- Top-left cell blank
+- Ensure the timetable includes exactly 2 header rows, placing all period labels and period times starting from the second column of the first and second rows.
+  - Ignore header rows such as: (e.g. คาบ, เวลา)
+  - First row = period labels (in original order)
+  - Second row = period times aligned under their labels
+- After the first two rows, all subsequent rows start with weekdays only, starting from row 3, (Monday, Tuesday, Wednesday, Thursday, Friday)
+- If a period name is not a **numeric period** (for example, “Morning Break”, “Lunch”, “Afternoon Break”), Fill that label into every weekday row for that column.
+- All other timetable cells must remain empty.
+**IMPORTANT**
+- Do NOT autopopulate anything else.
+- Do not assume period names or times
+- Do not translate or modify period names or times
+- Treat all text as raw strings
+- Skip section titles (e.g., “School period”) and blank rows
+Create table **separately** for each entity category:
+  - Sheet 6: Student (นักเรียน) All student classes: use their class_id (นักเรียน column) as table name
+  - Sheet 3: Teacher (ครู) All teachers: use their teacher_id as table name
+  - Sheet 5: Room (ห้องเรียน) All rooms: use their room_id as table name
+Skip any row that is a section title (rows where only the first column has text and other columns are empty) or header (column are defined in previous part).
 ---
 
 ## Step 2: Apply Pre-Placed Slots
-- From Sheet 4, locate all rows as Pre-place slots.
-- For each pre-placed slot:
-  - Apply it to the related student classes.
-  - If `apply_to = All`, apply that slot to all student classes and teachers.
+Read the Pre-place slots section from the sheet 4: Period (คาบเรียน).
+Each row defines a school activity that must be placed at specific time slots for specific student groups (and sometimes teachers).
+For each row in Pre-place slots section:
+1. Identify the slot from the คาบ field
+  - Format example: MON_1, WED_9, Everyday_6
+  - If Everyday_X → apply to Monday–Friday at period X
+  - If MON_X-MON_Y → apply to Monday at periods X, X+1, ... Y
+2. Determine the target student classes from apply to
+  - All → all classes and all internal teacher (teacher_id start with T)
+  - M.1 → all classes in grade M.1
+  - Multiple grades listed → apply to all listed
+  - Specific class (e.g., M.1/1) → apply only to that class
+3. Place the activity (ชื่อ) into the matching slot(s)
+  - Fill the timetable cell for each target class
+4. Do not overwrite existing slots
+  - If a slot is already filled → record a conflict instead
 
+Goals for step 2
+- Updated class timetables
+- Updated teacher and room timetables (if applicable)
+- A conflict log sheet for cases where a slot is already occupied
+**IMPORTANT**
+- Use empty timetable grid from step 1 as base and apply pre-place slot.
+- Never change period names or weekday names
+- Only assign slots exactly as defined in the sheet
+- Treat these slots as fixed and unavailable for future scheduling
 ---
 
 ## Step 3: Mark Teacher Availability
@@ -68,5 +100,5 @@ For each elective subject:
 
 ---
 
-✅ Goal:  
+Goal:  
 After completing these steps, you should have a fully populated pre-schedule that includes all fixed slots and unavailabilities, ready for the next phase of automated timetable generation.
