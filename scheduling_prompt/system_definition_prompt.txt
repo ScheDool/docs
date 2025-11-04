@@ -6,21 +6,19 @@ The input data is provided in an Excel (.xlsx) file containing several sheets.
 All column names and data in Thai (e.g. ชื่อวิชา, ครู, ห้องเรียน) must be treated as strings.
 Do not translate or parse Thai text — use them as-is for scheduling logic.
 
-Sheet 1: Curriculum (หลักสูตร)
+Sheet 1: Curriculum
 This sheet defines the core subjects for each grade, along with assigned teachers, periods, and constraints.
 Columns (from left to right):
-- รหัสวิชา (subject_id): Format <DeptLetter><5-digit code>
-- ชื่อวิชา (subject_name): Subject name paired with subject_id
-- คาบ/สัปดาห์ (number_of_period_per_week): Number of periods per week each class must study this subject
-- จำนวนห้อง (number_of_class): Number of student classes assigned to the teacher in this row
-- รวมคาบ (total_period_per_week): Total number of teaching periods per week for this subject
-- ครู (teachers): Teacher(s) responsible for teaching this subject
-- การแบ่งคาบสอน (block_pattern): Period grouping constraint, defined by dash-separated numbers (e.g. 2-2 means 2 consecutive blocks)
-- ห้อง (นักเรียน) ที่สอน (student_class): List of student classes taught by the teacher.
+- subject_id: Format <DeptLetter><5-digit code>
+- subject_name: Subject name paired with subject_id
+- #period_per_week: Number of periods per week each class must study this subject
+- teachers: Teacher(s) responsible for teaching this subject
+- block_pattern: Period grouping constraint, defined by dash-separated numbers (e.g. 2-2 means 2 consecutive blocks)
+- student_class: List of student classes taught by the teacher.
   Format /1, /2, /3 or range /1-5 (meaning /1, /2, /3, /4, /5)
-- หมายเหตุ (constaints): Additional special constraints in free-text form
-- ห้องเรียน (classroom): Specific required room_id (if any)
-- คาบเรียน (fixed_periods): Specific fixed periods (if any)
+- constaints: Additional special constraints in free-text form
+- classroom: Specific required room_id (if any)
+- fixed_periods: Specific fixed periods (if any)
 Data block:
 Separated by a marker row containing the grade level (e.g. ม.1, ม.2, ม.3, … ม.6).
 Example structure:
@@ -34,28 +32,27 @@ header row
 <ม.2 subject data>
 ```
 
-Sheet 2: Elective (วิชาเลือก)
+Sheet 2: Elective
 This sheet defines elective subjects, their available slots, teachers, and required rooms.
 Columns (from left to right):
-- ลำดับที่ (no.): Sequence number (irrelevant to scheduling logic)
-- รหัสวิชา (subject_id): <DeptLetter><5-digit code>, or use ชื่อวิชา (Subject_name) if no subject_id exists
-- ชื่อวิชา (subject_name): Elective subject name
-- ชื่อ (teacher_name): Teacher firstname only (no prefix or surname)
-- elective Slots: Group of columns, each header represents an elective slot name.
+- subject_id: <DeptLetter><5-digit code>, or use ชื่อวิชา (Subject_name) if no subject_id exists
+- subject_name: Elective subject name
+- teacher_name: Teacher firstname only (no prefix or surname)
+- elective Slots: Group of columns, each header represents an elective slot name defined in sheet 4: Period uinder section Pre-place slots.
   Value = 1 → subject offered in that slot
   Value = 0 → not offered in that slot
-- ห้องเรียน (classroom): Specific required room_id (if any)
+- classroom: Specific required room_id
 
-Sheet 3: Teacher (ครู)
+Sheet 3: Teacher
 This sheet lists all teachers, their departments, and availability information.
 Columns (from left to right):
 - teacher_id: Unique internal identifier for scheduling
-- คำนำหน้า (prefix): e.g. ครู, อ., ดร.
-- ชื่อ (teacher_name): Teacher firstname (no prefix or surname)
-- กลุ่มสาระ (department): Department or subject group (e.g. Math, Sci, อาจารย์นอก)
+- prefix: e.g. ครู, อ., ดร.
+- teacher_name: Teacher firstname (no prefix or surname)
+- department: Department or subject group (e.g. Math, Sci, อาจารย์นอก)
 - available_slots: Time slots available (only for อาจารย์นอก)
 - unavailable_slots: Time slots unavailable (only for ครูในโรงเรียน)
-- หมายเหตุ (constaints): Free-text notes or special teacher-specific rules
+- constaints: Free-text notes or special teacher-specific rules
 Data Blocks:
 Separated by marker rows defining teacher types:
 ```plaintext
@@ -66,44 +63,50 @@ header row
 <External teacher data...>
 ```
 
-Sheet 4: Period (คาบเรียน)
+Sheet 4: Period
 Defines the school’s daily structure and any fixed pre-assigned periods.
 Sections:
-1. School period (ช่วงคาบเรียน)
-  - คาบ (period): Period name or number
-  - เวลา (time): Either start–end time (e.g. 08.00-08.50) or number of minutes
-2. Pre-place slots (คาบพิเศษ / กิจกรรมบังคับ)
-  - ชื่อ (name): Event name
-  - คาบ (slots): Slots this event occupies
+1. School period
+  - period_label: Period name or number
+  - period_time: Either start–end time (e.g. 08.00-08.50) or number of minutes
+2. Pre-place slots
+  - slot_name: Event name
+  - periods: period_time this event occupies
+    - Format example: MON_1, WED_9, Everyday_6
+    - If Everyday_X → apply to Monday–Friday at period X
+    - If MON_X-MON_Y → apply to Monday at periods X, X+1, ... Y
   - apply_to: Defines who is affected (All = all classes and teachers)
+    - All → all classes and all internal teacher (teacher_id start with T)
+    - M.1 → all classes in grade M.1
+    - Multiple grades listed → apply to all listed
+    - Specific class (e.g., M.1/1) → apply only to that class
 Data Blocks:
 ```plaintext
 School period
 <period data...>
 Pre-place slots
-<slot data...>
+<pre-place slot data...>
 ```
 
-Sheet 5: Room (ห้องเรียน)
+Sheet 5: Room
 Defines available classrooms and their specific tags or constraints.
 Columns:
-- ห้อง / ชื่อห้อง / เลขห้อง (room_id): Unique room identifier
-- หมายเหตุ (Constaints): Tag/type of room (e.g. Lab, Gym, Com), must match subject requirements
+- room_id: Unique room identifier
+- constaints: Tag/type of room (e.g. Lab, Gym, Com), must match subject requirements
 
-Sheet 6: Student (นักเรียน)
+Sheet 6: Student
 Defines all student classes and their assigned curriculum.
 Columns:
-class_id: Unique ID in format <grade>/<section>
-ระดับชั้น (grade): Student grade (e.g. ม.1, ม.2)
-ห้อง (section): Section number
-ห้องประจำ (default_room): Default classroom (if not empty, use unless subject requires specific room)
-หลักสูตร (curriculum_type): Curriculum type to determine which curriculum the class follows
+- class_id: Unique ID in format <grade>/<section>
+- grade: Student grade (e.g. ม.1, ม.2)
+- section: Section number
+- default_room: Default classroom (if not empty, use unless subject requires specific room)
+- curriculum: determine which curriculum the class follows
 
-Sheet 7: Scout (ลูกเสือ) (optional)
+Sheet 7: Scout (optional)
 Defines teachers who are responsible for scout activities.
-- Columns may include scout ม.1, scout ม.2, scout ม.3
+- Columns included scout ม.1, scout ม.2, scout ม.3
 - Each column contains a list of teacher names assigned to that scout level
-- No fixed format — handle flexibly
 
 
 # Objective

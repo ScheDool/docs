@@ -6,12 +6,12 @@ This pre-schedule defines all non-negotiable (pre-placed, unavailable, scout, an
 ---
 
 ## Step 1: Generate Empty Schedules
-Read the School Period section from the sheet 4: Period (คาบเรียน), you must NOT include data in Pre-place slots section in this step.
+Read the School Period section from the sheet 4: Period, you must NOT include data in Pre-place slots section in this step.
 Using this data, generate an empty weekly timetable grid:
 **Grid format rules**
 - Top-left cell blank
 - Ensure the timetable includes exactly 2 header rows, placing all period labels and period times starting from the second column of the first and second rows.
-  - Ignore header rows such as: (e.g. คาบ, เวลา)
+  - Ignore header rows
   - First row = period labels (in original order)
   - Second row = period times aligned under their labels
 - After the first two rows, all subsequent rows start with weekdays only, starting from row 3, (Monday, Tuesday, Wednesday, Thursday, Friday)
@@ -24,29 +24,22 @@ Using this data, generate an empty weekly timetable grid:
 - Treat all text as raw strings
 - Skip section titles (e.g., “School period”) and blank rows
 Create table **separately** for each entity category:
-  - Sheet 6: Student (นักเรียน) All student classes: use their class_id (นักเรียน column) as table name
-  - Sheet 3: Teacher (ครู) All teachers: use their teacher_id as table name
-  - Sheet 5: Room (ห้องเรียน) All rooms: use their room_id as table name
+  - Sheet 6: Student All student classes: use their class_id as table name
+  - Sheet 3: Teacher All teachers: use their teacher_id as table name
+  - Sheet 5: Room All rooms: use their room_id as table name
 Skip any row that is a section title (rows where only the first column has text and other columns are empty) or header (column are defined in previous part).
 ---
 
 ## Step 2: Apply Pre-Placed Slots
-Read the Pre-place slots section from the sheet 4: Period (คาบเรียน).
+Read the Pre-place slots section from the sheet 4: Period.
 Each row defines a school activity that must be placed at specific time slots for specific student groups (and sometimes teachers).
 For each row in Pre-place slots section:
-1. Identify the slot from the คาบ field
-  - Format example: MON_1, WED_9, Everyday_6
-  - If Everyday_X → apply to Monday–Friday at period X
-  - If MON_X-MON_Y → apply to Monday at periods X, X+1, ... Y
-2. Determine the target student classes from apply to
-  - All → all classes and all internal teacher (teacher_id start with T)
-  - M.1 → all classes in grade M.1
-  - Multiple grades listed → apply to all listed
-  - Specific class (e.g., M.1/1) → apply only to that class
-3. Place the activity (ชื่อ) into the matching slot(s)
+1. Identify the slot from the periods field
+2. Determine the target student classes (and / or teachers) from apply to
+3. Place the slot_name into the matching slot(s)
   - Fill the timetable cell for each target class
 4. Do not overwrite existing slots
-  - If a slot is already filled → record a conflict instead
+  - If a slot is already filled (except break or no class) → record a conflict instead
 
 Goals for step 2
 - Updated class timetables
@@ -60,14 +53,14 @@ Goals for step 2
 ---
 
 ## Step 3: Mark Teacher Availability
-- Open Sheet 3: Teacher (ครู).
+- Read Sheet 3: Teacher (ครู).
 
-### For Internal Teachers:
+### For Each Internal Teachers:
 - Read the `unavailable_slots` column.
-- Mark all listed slots as unavailable in their schedule.
+- Mark all listed slots as unavailable in their timetable.
 - These unavailable slots must also be treated as occupied when checking for overlaps.
 
-### For External Teachers:
+### For Each External Teachers:
 - Read the `available_slots` column.
 - Mark all slots except those listed as unavailable.
 
@@ -76,7 +69,7 @@ Goals for step 2
 ## Step 4: Assign Scout (ลูกเสือ) Sessions
 - Read Sheet 7: Scout (ลูกเสือ).
 
-For each level:
+For each column:
 - ลูกเสือ ม.1 (Scout M.1) → Find the corresponding teacher(s) listed under this column.
   - Mark all Scout M.1 slots (as defined in Sheet 4) in their schedules.
 - Repeat the same for:
