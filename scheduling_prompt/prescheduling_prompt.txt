@@ -52,21 +52,7 @@ Goals for step 2
 - Treat these slots as fixed and unavailable for future scheduling
 ---
 
-## Step 3: Mark Teacher Availability
-- Read Sheet 3: Teacher (ครู).
-
-### For Each Internal Teachers:
-- Read the `unavailable_slots` column.
-- Mark all listed slots as unavailable in their timetable.
-- These unavailable slots must also be treated as occupied when checking for overlaps.
-
-### For Each External Teachers:
-- Read the `available_slots` column.
-- Mark all slots except those listed as unavailable.
-
----
-
-## Step 4: Assign Scout (ลูกเสือ) Sessions
+## Step 3: Assign Scout (ลูกเสือ) Sessions
 - Read Sheet 7: Scout (ลูกเสือ).
 
 For each column:
@@ -78,7 +64,7 @@ For each column:
 
 ---
 
-## Step 5: Schedule Elective Courses
+## Step 4: Schedule Elective Courses
 - Read Sheet 2: Elective (วิชาเลือก).
 
 For each elective subject:
@@ -90,6 +76,20 @@ For each elective subject:
    - The room’s schedule
 4. Set the value in the assigned slots to 1 to mark the elective course.
 5. Ensure all schedules remain conflict-free across teachers, rooms, and classes.
+
+---
+
+## Step 5: Mark Teacher Availability
+- Read Sheet 3: Teacher (ครู).
+
+### For Each Internal Teachers:
+- Read the `unavailable_slots` column.
+- Mark all listed slots as unavailable in their timetable.
+- These unavailable slots must also be treated as occupied when checking for overlaps.
+
+### For Each External Teachers:
+- Read the `available_slots` column.
+- Mark all slots except those listed as unavailable.
 
 ---
 
