@@ -1,0 +1,160 @@
+# 📘 Schedule Schema Definitions
+
+This section defines how schedules are represented in memory and in the final output.  
+It describes all key entities, scheduling rules, and teaching type semantics used when generating or validating school timetables.
+
+## Definitions
+
+- Class: A homeroom-based student group. Identifier format: `<grade>/<section>`.  
+  Example: `"1/1"`.
+- Subject: A course being taught. Identifier format: `<DeptLetter><5-digit code>`.  
+  Example: `"M10010"`.
+- Teacher: Instructor responsible for lessons. Identifier format: `"T###"`.  
+  Example: `"T001"`.
+- Room: A physical teaching location, such as `"1001"`, `"COM1"`, `"GYM"`.
+- Period: The smallest unit of scheduled teaching time defined by the school.
+- Slot: A unique scheduled period identified by `Day + Period` index.  
+  Format: `"<DAY>_<PERIOD>"`, e.g. `"MON_1"`.
+- Group: A subgroup within a slot when teaching requires splits or multiple groups.  
+  Each group may have its own teacher(s), room(s), or class subset(s).
+- Constraints: Optional rules affecting scheduling.  
+  Examples: fixed period requirement, specific room, or teaching format rules such as `SPLIT` or `TEAM`.
+
+---
+
+## Scheduling Rules
+Scheduling determines how classes, teachers, rooms, and subjects are assigned into time slots across the week.
+
+### General Principles
+- Each schedule entry represents one slot assignment — one unique combination of day and period.  
+- A Class, Teacher, or Room can appear in only one slot at any given time.  
+  - No overlapping assignments are allowed.  
+  - Every slot must respect this exclusivity rule.
+
+### Structural Consistency
+- Every slot must strictly follow the schedule schema defined above.  
+- Each slot must include valid and complete information for:
+  - `subject_id`
+  - `class_ids`
+  - `teacher_ids`
+  - `room_ids`
+  - `teaching_type`
+  - `groups`
+
+### Behavioral Rules
+- Groups inside a slot must follow the rules of their assigned teaching_type.  
+  For example, *Standard* has one class and one teacher, while *Split* has multiple groups with different teachers or rooms.
+- All assigned classes, teachers, and rooms must correspond correctly within their groups.  
+- Constraints such as fixed periods, specific rooms, or pre-defined blocks must be fully respected.
+
+### Integrity & Validation
+- Ensure no overlap across all entities:  
+  - No class is scheduled twice at the same time.  
+  - No teacher teaches in two places simultaneously.  
+  - No room hosts more than one session at once.
+- Always maintain logical consistency between `slot.class_ids` and each group’s content.
+- If any ambiguity or undefined constraint occurs, ask for clarification instead of making assumptions.
+
+---
+
+## Schedule Standard Format
+
+Each schedule entry is represented as a slot record.
+
+Each `Class`, `Teacher`, and `Room` can appear in only one subject per slot.  
+These entities are linked together within a unified structure.
+
+```json
+{
+  "schedule_id": "SCHEDULE_ID",
+  "slot_id": "DAY_PERIOD",
+  "subject_id": "SUBJECT",
+  "teaching_type": "TYPE",
+  "class_ids": [],
+  "groups": [
+    {
+      "group_id": 1,
+      "class_ids": [],
+      "teacher_ids": [],
+      "room_ids": [],
+      "constraints": []
+    }
+  ]
+}
+
+```
+
+Field Descriptions:
+- `schedule_id`: Unique identifier for the generated timetable.
+- `slot_id`: Unique slot identifier containing day and period information.
+- `subject_id`: Identifier of the subject taught in that slot.
+- `teaching_type`: One of the predefined teaching types (see below).
+- `class_ids`: List of all classes participating in that slot.
+- `groups`: List of one or more teaching groups under that slot.
+Each group contains:
+- `group_id`: Unique number within the slot.
+- `class_ids`: Class(es) assigned to that group (may be empty for full splits).
+- `teacher_ids`: Assigned teachers.
+- `room_ids`: Assigned rooms.
+- `constraints`: Optional extra conditions applied to the group.
+
+---
+
+## Teaching Types
+Teaching types define how classes, teachers, and rooms are arranged within a slot.
+Each type determines the valid structure of groups and constraints.
+Teaching type is written as type=<teaching_type> inside constraints.
+Must be one of the following:
+
+### Standard
+- One class is taught by one teacher in one room.
+- slot.class_ids contains exactly one class.
+- groups has exactly one group.
+- That group includes the same class_id, exactly one teacher_id, and one room_id.
+### Team
+- One class is taught by multiple teachers together in one room.
+- slot.class_ids contains exactly one class.
+- groups has exactly one group.
+- That group contains one class_id, multiple teacher_ids, and one room_id.
+- The constraint “TEAM” must be included.
+### Split
+- One class is split into multiple subgroups.
+- slot.class_ids contains exactly one class.
+- groups contains multiple groups.
+- Each group does not specify class_ids (empty) because they represent subgroups of the same class.
+- Teachers and rooms must differ per subgroup.
+- The constraint “SPLIT” must be included.
+### Multi-Class
+- Multiple classes share a single teacher in one room.
+- slot.class_ids lists two or more classes.
+- groups has exactly one group.
+- That group has the same class_ids as the slot, one teacher_id, one room_id.
+- The constraint “MULTI” must be included.
+### Multi-Class Team
+- Multiple classes share multiple teachers in one room.
+- slot.class_ids lists two or more classes.
+- groups has exactly one group.
+- Group contains multiple teacher_ids and one room_id.
+- The constraint “MULTI-TEAM” must be included.
+### Subgroup
+- Subgroup teaching where participants may differ across groups.
+- slot.class_ids contains two or more classes.
+- groups has multiple groups.
+- The constraint “SUBGROUP” must be included.
+#### Subgroup possible cases:
+- Case A: class-based subgroups
+    Each group serves one or more classes.
+    group.class_ids contains at least one class per group.
+- Case B: student-choice subgroups
+    Subgroups are independent of class boundaries.
+    group.class_ids may be empty, indicating mixed or elective-based grouping.
+
+## General rules for all teaching types:
+- All group.class_ids must be a subset of slot.class_ids, unless empty for split/elective cases.
+- All teacher_ids and room_ids must be unique within the slot, unless sharing is explicitly allowed (e.g. Team, Multi-Class Team).
+- Every class and teacher assigned to a slot must belong to at least one group.
+- Each slot must satisfy period and room constraints as defined in the input data.
+
+---
+
+Your task step by step will provided in next part.
