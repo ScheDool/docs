@@ -1,0 +1,35 @@
+School period,,
+period_label,period_time,
+1,07.55-08.05,
+2,08.05-08.55,
+3,09.00-09.10,
+Morning Break,10,
+4,10.00-10.50,
+5,10.55-11.45,
+6,11.50-12.40,
+7,12.40-13.30,
+8,13.35-14.25,
+Afternoon Break,10,
+9,14.35-15.25,
+10,15.30-16.20,
+,,
+Pre-place slots,,
+slot_name,periods,apply_to
+Homeroom,Everyday_1,All
+ชุมนุม,WED_10,All
+Lunch ม.ต้น,Everyday_6,"M.1, M.2, M.3"
+Lunch ม.ปลาย,Everyday_7,"M.4, M.5, M.6"
+ลูกเสือม.1,MON_10,M.1
+ลูกเสือม.2,TUE_10,M.2
+ลูกเสือม.3,THU_10,M.3
+เสรีม.ต้น1,FRI_2-FRI_3,"M.1, M.2, M.3"
+เสรีม.ต้น2,FRI_4-FRI_5,"M.1, M.2, M.3"
+Bridging course,FRI_7-FRI_10,"M.1, M.2, M.3"
+คลินิกวิชาการ,FRI_8-FRI_10,"M.4, M.5"
+เสรีม.ปลาย1,MON_5-MON_6,M.6
+เสรีม.ปลาย2,TUE_5-TUE_6,M.6
+เสรีม.ปลาย3,TUE_8-TUE_9,M.6
+เสรีม.ปลาย4,WED_5-WED_6,M.6
+เสรีม.ปลาย5,WED_8-WED_9,M.6
+เสรีม.ปลาย6,THU_5-THU_6,M.6
+ไม่มีเรียน,FRI_1-FRI_10,M.6
