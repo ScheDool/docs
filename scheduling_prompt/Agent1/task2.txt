@@ -1,0 +1,223 @@
+# Task 2: Pre-Placement Allocation
+
+## Objective
+Process all pre-placed slots from the PREPLACE sheet and allocate them to the appropriate student, teacher, and room timetables. This establishes fixed scheduling constraints before automatic scheduling begins.
+
+---
+
+## Step 1: Load Pre-Placement Data
+
+**Goal:** Load the PREPLACE sheet into memory for processing.
+
+**Agent Actions:**
+
+Load the PREPLACE sheet:
+```
+Action: LoadSpreadsheetSheet
+Action Input: {"filepath": "timetable.xlsx", "sheet_name": "PREPLACE"}
+```
+
+Retrieve the sheet information to examine its structure:
+```
+Action: GetSheetInfo
+Action Input: {"sheet_name": "PREPLACE"}
+```
+
+---
+
+## Step 2: Process and Place All Pre-Placement Slots
+
+**Goal:** Parse each row in the PREPLACE sheet, expand period ranges into individual slots, and place them in the timetables.
+
+### Understanding Period Range Syntax:
+
+The `periods` column in PREPLACE uses special notation that you must parse and expand:
+
+**Format Rules:**
+- `DAY_PERIOD` = Single slot (e.g., `MON_1` means Monday Period 1)
+- `DAY_START-DAY_END` = Range on same day (e.g., `MON_1-MON_3` means Monday Periods 1, 2, 3)
+- `Everyday_PERIOD` = Same period every weekday (e.g., `Everyday_4` means Period 4 on MON, TUE, WED, THU, FRI)
+- Multiple ranges separated by commas (e.g., `TUE_2,THU_2` means Tuesday Period 2 AND Thursday Period 2)
+
+**Days:** MON, TUE, WED, THU, FRI
+
+**Your Task:** Parse these expressions into individual (day, period_label) pairs.
+
+---
+
+### Agent Workflow:
+
+**Step 2a: Retrieve All PREPLACE Rows**
+
+Get all rows to process:
+```
+Action: LoopProcessPreplaceSheet
+Action Input: {"sheet_name": "PREPLACE", "start_index": 0}
+```
+
+**Step 2b: For Each Row, Parse and Place Slots**
+
+For each row retrieved from PREPLACE:
+
+1. **Extract Row Data:** Get the values for:
+   - `class_id` (e.g., "1/1")
+   - `subject_id` (e.g., "M10011")
+   - `teacher_id` (e.g., "T001" or null)
+   - `room_id` (e.g., "C104" or null)
+   - `periods` (e.g., "MON_1-MON_3" or "Everyday_4")
+
+2. **Parse the Period String:** Analyze the `periods` value and expand it into individual (day, period_label) pairs.
+
+   **Example Parsing:**
+   - Input: `"MON_1-MON_3"` → Output: `[("MON", "1"), ("MON", "2"), ("MON", "3")]`
+   - Input: `"Everyday_4"` → Output: `[("MON", "4"), ("TUE", "4"), ("WED", "4"), ("THU", "4"), ("FRI", "4")]`
+   - Input: `"TUE_2,THU_2"` → Output: `[("TUE", "2"), ("THU", "2")]`
+
+3. **For Each (day, period_label) Pair:**
+
+   a. Find the period column format using the period_label:
+   ```
+   Action: FindPeriodColumn
+   Action Input: {"period_label": "1"}
+   ```
+   This returns the period_col in format `"label,time"` (e.g., `"1,07.55-08.05"`)
+
+   b. Place the slot in the timetable:
+   ```
+   Action: PlaceScheduleSlot
+   Action Input: {
+     "day": "MON",
+     "period_col": "1,07.55-08.05",
+     "subject_id": "M10011",
+     "teacher_id": "T001",
+     "room_id": "C104",
+     "class_id": "1/1",
+     "reason": "preplace"
+   }
+   ```
+
+4. **Monitor Responses:** If PlaceScheduleSlot returns a CONFLICT message, note it and continue with the next slot.
+
+---
+
+### Complete Example Workflow for One Row:
+
+**Given PREPLACE Row:**
+```json
+{
+  "class_id": "1/1",
+  "subject_id": "M10011",
+  "teacher_id": "T001",
+  "room_id": "C104",
+  "periods": "MON_1-MON_3"
+}
+```
+
+**Step-by-step Actions:**
+
+1. Parse `"MON_1-MON_3"` → Results in 3 slots: (MON, 1), (MON, 2), (MON, 3)
+
+2. For slot (MON, 1):
+   ```
+   Action: FindPeriodColumn
+   Action Input: {"period_label": "1"}
+   Observation: {"period_column": "1,07.55-08.05", "found": true}
+   
+   Action: PlaceScheduleSlot
+   Action Input: {
+     "day": "MON",
+     "period_col": "1,07.55-08.05",
+     "subject_id": "M10011",
+     "teacher_id": "T001",
+     "room_id": "C104",
+     "class_id": "1/1",
+     "reason": "preplace"
+   }
+   Observation: "SUCCESS: Slot scheduled."
+   ```
+
+3. For slot (MON, 2):
+   ```
+   Action: FindPeriodColumn
+   Action Input: {"period_label": "2"}
+   Observation: {"period_column": "2,08.10-09.00", "found": true}
+   
+   Action: PlaceScheduleSlot
+   Action Input: {
+     "day": "MON",
+     "period_col": "2,08.10-09.00",
+     "subject_id": "M10011",
+     "teacher_id": "T001",
+     "room_id": "C104",
+     "class_id": "1/1",
+     "reason": "preplace"
+   }
+   Observation: "SUCCESS: Slot scheduled."
+   ```
+
+4. For slot (MON, 3):
+   ```
+   Action: FindPeriodColumn
+   Action Input: {"period_label": "3"}
+   Observation: {"period_column": "3,09.10-10.00", "found": true}
+   
+   Action: PlaceScheduleSlot
+   Action Input: {
+     "day": "MON",
+     "period_col": "3,09.10-10.00",
+     "subject_id": "M10011",
+     "teacher_id": "T001",
+     "room_id": "C104",
+     "class_id": "1/1",
+     "reason": "preplace"
+   }
+   Observation: "SUCCESS: Slot scheduled."
+   ```
+
+---
+
+**Step 2c: Check for Conflicts**
+
+After processing all PREPLACE rows, retrieve the conflict log:
+```
+Action: GetConflicts
+```
+
+Review the conflicts and summarize them in your final report.
+
+---
+
+## Expected Data Structure
+
+The PREPLACE sheet should contain columns:
+- `class_id`: Student class identifier (e.g., "1/1", "2/3")
+- `subject_id`: Subject/activity code (e.g., "M10011", "FREE")
+- `teacher_id`: Teacher identifier (e.g., "T001", "E005") - may be null/empty
+- `room_id`: Room identifier (e.g., "C104", "B108-109") - may be null/empty
+- `periods`: Period range expression (e.g., "MON_1-MON_3", "Everyday_4", "TUE_2,THU_2")
+
+---
+
+## Completion Criteria
+
+Once all steps are complete:
+- All rows from PREPLACE sheet have been processed
+- Each period range has been parsed and expanded into individual (day, period) slots
+- All valid slots have been placed in student, teacher, and room timetables
+- Any conflicts have been logged and reported
+
+**Report: "Task 2 Complete: Pre-placement allocation finished with [X] slots placed and [Y] conflicts logged."**
+
+---
+
+## ✅ All Required Tools Available
+
+All required tools exist in your current code:
+- ✅ `LoadSpreadsheetSheet` - to load PREPLACE data
+- ✅ `GetSheetInfo` - to examine the data structure
+- ✅ `LoopProcessPreplaceSheet` - to iterate through rows
+- ✅ `FindPeriodColumn` - to map period labels to period_col format
+- ✅ `PlaceScheduleSlot` - to place individual slots
+- ✅ `GetConflicts` - to retrieve conflict logs
+
+**The LLM agent will handle parsing the period_string directly using its reasoning capabilities.**

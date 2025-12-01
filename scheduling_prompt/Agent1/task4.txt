@@ -1,0 +1,7 @@
+**Step 4: Schedule Elective Courses**
+1. Read the ELECTIVE sheet.
+2. For each subject offered in a slot (where dynamic column value = 1), attempt to schedule the subject_id into the corresponding Teacher and Room schedules.
+3. Assignment Value: Use the subject_id.
+
+Conflict Check: If a cell in the Teacher or Room schedule is occupied (by Pre-place, unavailability, or another Elective), log the conflict.
+

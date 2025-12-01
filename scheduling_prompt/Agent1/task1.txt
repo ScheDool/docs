@@ -1,0 +1,125 @@
+# Task 1: Initialize Timetable Grids
+
+## Objective
+Define the timetable structure, pre-fill breaks, and create pre-initialized empty timetables in memory for every student group, teacher, and room before scheduling begins.
+
+---
+
+## Step 1: Initialize Period Structure
+
+**Goal:** Define all periods and weekdays, then auto-fill non-numeric periods (breaks) using data from the PERIOD sheet.
+
+**Instructions:**
+1. Extract the period definitions (label and time columns)
+2. Initialize the timetable structure with these periods
+3. The system will automatically fill break periods in the template
+
+**Agent Actions:**
+
+Retrieve the sheet to examine its structure:
+```
+Action: GetSheetInfo
+Action Input: {"sheet_name": "PERIOD"}
+```
+
+Then, initialize the period structure using the data. You must extract the period information and format it as a list of period objects:
+```
+Action: InitializePeriodStructure
+Action Input: {
+  "periods": [
+    {"label": "1", "time": "07.55-08.05"},
+    {"label": "2", "time": "08.10-09.00"},
+    {"label": "Morning Break", "time": "10 min"},
+    {"label": "3", "time": "09.10-10.00"},
+    ...continue for all periods from the PERIOD sheet...
+  ]
+}
+```
+
+---
+
+## Step 2: Create Entity Timetables
+
+**Goal:** Instantiate pre-filled timetable grids for all students, teachers, and rooms by querying each entity ID. This forces the ScheduleManager to create and store the template grid for each entity.
+
+### 2a. Student Timetables
+
+**Instructions:**
+1. Extract all unique class_id values
+2. Call GetEntitySchedule for each class_id to create its timetable grid
+
+**Agent Actions:**
+
+Get the sheet information to see available class IDs:
+```
+Action: GetSheetInfo
+Action Input: {"sheet_name": "STUDENT"}
+```
+
+For each unique class_id in the class_id column, create a timetable:
+```
+Action: GetEntitySchedule
+Action Input: {"entity_type": "student", "entity_id": "1/1"}
+```
+
+Repeat for all class IDs (e.g., "1/2", "1/3", "2/1", etc.)
+
+---
+
+### 2b. Teacher Timetables
+
+**Instructions:**
+1. Extract all unique teacher_id values
+2. Call GetEntitySchedule for each teacher_id to create its timetable grid
+
+**Agent Actions:**
+
+Get the sheet information to see available teacher IDs:
+```
+Action: GetSheetInfo
+Action Input: {"sheet_name": "TEACHER"}
+```
+
+For each unique teacher_id in the teacher_id column, create a timetable:
+```
+Action: GetEntitySchedule
+Action Input: {"entity_type": "teacher", "entity_id": "T001"}
+```
+
+Repeat for all teacher IDs (e.g., "T002", "T003", "E001", etc.)
+
+---
+
+### 2c. Room Timetables
+
+**Instructions:**
+1. Extract all unique room_id values
+2. Call GetEntitySchedule for each room_id to create its timetable grid
+
+**Agent Actions:**
+
+Get the sheet information to see available room IDs:
+```
+Action: GetSheetInfo
+Action Input: {"sheet_name": "ROOM"}
+```
+
+For each unique room_id in the room_id column, create a timetable:
+```
+Action: GetEntitySchedule
+Action Input: {"entity_type": "room", "entity_id": "B103"}
+```
+
+Repeat for all room IDs (e.g., "B108-109", "C212", "A316", etc.)
+
+---
+
+## Completion Criteria
+
+Once all steps are complete:
+- Period structure is initialized with breaks auto-filled
+- All student class timetables exist in memory
+- All teacher timetables exist in memory
+- All room timetables exist in memory
+
+**Report: "Task 1 Complete: Timetable grids initialized for all entities."**

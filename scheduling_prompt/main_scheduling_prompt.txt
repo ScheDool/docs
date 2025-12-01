@@ -1,3 +1,18 @@
+### Objective
+From the input, create a complete school timetable that assigns:
+Subjects → Teachers → Classes → Rooms → Time slots
+while satisfying all constraints from every sheet.
+Key goals:
+1. Respect all fixed periods and pre-placed slots.
+2. Ensure teacher and room availability is never violated.
+3. Match each subject’s required periods per week.
+4. Ensure no teacher or student class overlaps.
+5. Follow specific constraints defined in “หมายเหตุ”.
+6. Match room types correctly with subject requirements.
+7. Respect Block_pattern, curriculum_type, and default_room.
+8. For electives, ensure correct slot availability and room assignments.
+9. Include Scout and other fixed school activities.
+
 # 📘 Schedule Schema Definitions
 
 This section defines how schedules are represented in memory and in the final output.  

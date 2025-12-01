@@ -1,0 +1,6 @@
+**Step 5: Assign Scout Sessions**
+1. Read the SCOUT sheet.
+2. For each grade column (e.g., ม.1), find the corresponding slot name in the PRE-PLACE sheet (e.g., ลูกเสือ ม.1).
+3. Assign the Scout session to the schedules of all listed teachers.
+4. Assignment Value: Use the grade's session name (e.g., ลูกเสือ ม.1).
+5. Conflict Check: Log conflicts if the slot is occupied.

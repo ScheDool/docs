@@ -1,0 +1,292 @@
+================================================================================
+INPUT DATA STRUCTURE AND FIELD DESCRIPTIONS
+================================================================================
+
+The agent processes data from 8 spreadsheet sheets. Each sheet has specific columns and formats that must be understood for proper scheduling.
+
+--------------------------------------------------------------------------------
+SHEET 1: PERIOD
+--------------------------------------------------------------------------------
+Defines the school's daily timetable structure.
+
+**Columns:**
+- `period_label` (string): Period name or number (e.g., "1", "2", "Morning Break", "Lunch")
+- `period_time` (string): Either:
+  - Time range format: "08.00-08.50" (start-end time)
+  - Duration format: "10" (number of minutes for breaks)
+
+**Purpose:** Establishes the column headers for all timetable grids.
+
+**Example Data:**
+| period_label | period_time  |
+|--------------|--------------|
+| 1            | 07.55-08.05  |
+| 2            | 08.10-09.00  |
+| Morning Break| 10           |
+| 3            | 09.10-10.00  |
+
+--------------------------------------------------------------------------------
+SHEET 2: STUDENT
+--------------------------------------------------------------------------------
+Defines all student classes and their properties.
+
+**Columns:**
+- `class_id` (string): Unique identifier in format "<grade>/<section>" (e.g., "1/1", "2/3", "3/5")
+  - Grade: ม.1, ม.2, ม.3, etc.
+  - Section: 1, 2, 3, etc.
+- `grade` (string): Grade level (e.g., "ม.1", "ม.2")
+- `section` (string/int): Section number (e.g., "1", "2")
+- `default_room` (string): Default classroom room_id (e.g., "B103", "C212")
+  - Use this room unless subject requires a specific room
+  - May be empty/null
+- `curriculum` (string): Curriculum type the class follows (e.g., "Standard", "Gifted", "MEP")
+
+**Purpose:** Identifies all student groups that need timetables.
+
+**Example Data:**
+| class_id | grade | section | default_room | curriculum |
+|----------|-------|---------|--------------|------------|
+| 1/1      | ม.1   | 1       | B103         | Standard   |
+| 1/2      | ม.1   | 2       | B104         | Standard   |
+| 2/1      | ม.2   | 1       | C201         | Gifted     |
+
+--------------------------------------------------------------------------------
+SHEET 3: TEACHER
+--------------------------------------------------------------------------------
+Lists all teachers and their availability constraints.
+
+**Columns:**
+- `teacher_id` (string): Unique identifier
+  - Format: "Txxx" for internal teachers (e.g., "T001", "T023")
+  - Format: "Exxx" for external teachers (e.g., "E001", "E012")
+- `teacher_name` (string): Teacher's first name (no prefix or surname)
+- `available_slots` (string): **FOR EXTERNAL TEACHERS ONLY (Exxx)**
+  - Defines ONLY the time slots when external teacher is available
+  - Uses period range format (see Period Range Format section below)
+  - All slots NOT listed are UNAVAILABLE
+  - Example: "TUE_3-TUE_5,THU_3-THU_5" means only available Tuesday and Thursday periods 3-5
+- `unavailable_slots` (string): **FOR INTERNAL TEACHERS ONLY (Txxx)**
+  - Defines specific time slots when internal teacher is NOT available
+  - Uses period range format (see Period Range Format section below)
+  - All slots NOT listed are available
+  - Example: "MON_1-MON_2,FRI_8" means unavailable Monday periods 1-2 and Friday period 8
+- `constraints` (string): Free-text notes or special teacher-specific rules
+
+**Purpose:** Establishes teacher availability for scheduling validation.
+
+**Example Data:**
+| teacher_id | teacher_name | available_slots      | unavailable_slots | constraints        |
+|------------|--------------|----------------------|-------------------|--------------------|
+| T001       | John         |                      | MON_1,FRI_8       | Department head    |
+| T023       | Sarah        |                      | WED_1-WED_3       |                    |
+| E005       | Mike         | TUE_3-TUE_5,THU_3-5  |                   | Part-time lecturer |
+
+--------------------------------------------------------------------------------
+SHEET 4: ROOM
+--------------------------------------------------------------------------------
+Defines available classrooms and their properties.
+
+**Columns:**
+- `room_id` (string): Unique room identifier (e.g., "B103", "C212", "Lab-1", "Gym")
+- `constraints` (string): Contains either:
+  - Student class who uses this as default_room (e.g., "1/1", "2/3")
+  - Room name for special-purpose rooms (e.g., "Science Lab", "Computer Lab")
+- `tag` (string): Identifies room type for subject matching
+  - Examples: "Science", "Computer", "Art", "Music", "PE"
+  - Used to match subjects requiring specific room types
+  - May be empty for standard classrooms
+
+**Purpose:** Defines available spaces and their capabilities.
+
+**Example Data:**
+| room_id   | constraints    | tag      |
+|-----------|----------------|----------|
+| B103      | 1/1            |          |
+| B104      | 1/2            |          |
+| Lab-1     | Science Lab    | Science  |
+| Comp-201  | Computer Lab   | Computer |
+
+--------------------------------------------------------------------------------
+SHEET 5: PREPLACE
+--------------------------------------------------------------------------------
+Defines all fixed pre-assigned time slots (e.g., assemblies, homeroom, breaks).
+
+**Columns:**
+- `slot_name` (string): Event/activity name (e.g., "Morning Assembly", "Homeroom", "Lunch Break")
+- `periods` (string): Time slots this event occupies
+  - Uses period range format (see Period Range Format section below)
+  - Examples:
+    - "MON_1" = Monday period 1
+    - "MON_1-MON_3" = Monday periods 1, 2, 3
+    - "Everyday_6" = Period 6 every weekday (MON_6, TUE_6, WED_6, THU_6, FRI_6)
+    - "TUE_2,THU_2" = Tuesday period 2 AND Thursday period 2
+- `apply_to` (string): Defines who is affected by this pre-placement
+  - "All" = All classes AND all internal teachers (Txxx)
+  - "ม.1" = All classes in grade 1 (e.g., 1/1, 1/2, 1/3, etc.)
+  - "ม.1,ม.2" = All classes in grades 1 and 2
+  - "1/1" = Only class 1/1
+  - "1/1,1/2" = Only classes 1/1 and 1/2
+
+**Purpose:** Establishes fixed constraints before automatic scheduling.
+
+**Example Data:**
+| slot_name         | periods      | apply_to |
+|-------------------|--------------|----------|
+| Morning Assembly  | MON_1        | All      |
+| Homeroom          | Everyday_1   | All      |
+| Lunch Break       | Everyday_6   | All      |
+| Club Activity     | WED_8-WED_9  | ม.1,ม.2  |
+
+--------------------------------------------------------------------------------
+SHEET 6: CURRICULUM
+--------------------------------------------------------------------------------
+Defines core subjects for each grade level, with teaching requirements.
+
+**Structure:**
+- Data is separated by marker rows containing grade levels (e.g., "ม.1", "ม.2")
+- Each grade section contains multiple subject rows
+
+**Columns:**
+- `subject_id` (string): Format "<DeptLetter><5-digit code>" (e.g., "M10011", "T20345")
+  - If missing, use subject_name as identifier
+- `subject_name` (string): Full subject name (e.g., "Mathematics", "English")
+- `period_per_week` (int): Number of periods per week each class must study this subject
+- `teachers` (string): teacher_id(s) responsible for teaching
+  - May be single ID: "T001"
+  - May be multiple IDs: "T001,T023"
+- `block_pattern` (string): Period grouping constraint
+  - Examples: "2-2" = two blocks of 2 consecutive periods
+  - Examples: "3-1" = one block of 3 consecutive periods, one single period
+  - Empty = no specific pattern required
+- `student_class` (string): List of student sections assigned to teacher
+  - Format: comma-separated section numbers (e.g., "1,2,3,5")
+  - Means: Include only sections whose numbers appear in this list
+  - Example: If value is "1,3,5", teacher teaches sections 1, 3, and 5 of that grade
+- `constraints` (string): Additional special constraints in free-text form
+- `classroom` (string): Specific required room_id (e.g., "Lab-1", "Comp-201")
+  - Overrides default_room from STUDENT sheet
+  - May be empty
+- `fixed_periods` (string): Specific fixed time slots for this subject
+  - Uses period range format
+  - May be empty
+
+**Purpose:** Defines what subjects need to be scheduled and their constraints.
+
+**Example Data:**
+```
+[Marker Row: ม.1]
+| subject_id | subject_name | period_per_week | teachers | block_pattern | student_class | constraints | classroom | fixed_periods |
+|------------|--------------|-----------------|----------|---------------|---------------|-------------|-----------|---------------|
+| M10011     | Mathematics  | 4               | T001     | 2-2           | 1,2,3         |             |           |               |
+| T10012     | Thai         | 3               | T023     | 2-1           | 1,2,3,4       |             |           |               |
+| S10013     | Science      | 3               | T045     |               | 1,2           | Lab needed  | Lab-1     |               |
+
+[Marker Row: ม.2]
+| subject_id | subject_name | period_per_week | teachers | block_pattern | student_class | constraints | classroom | fixed_periods |
+|------------|--------------|-----------------|----------|---------------|---------------|-------------|-----------|---------------|
+| M20011     | Mathematics  | 5               | T002     | 3-2           | 1,2,3         |             |           |               |
+```
+
+--------------------------------------------------------------------------------
+SHEET 7: ELECTIVE
+--------------------------------------------------------------------------------
+Defines elective subjects and their available time slots.
+
+**Columns:**
+- `subject_id` (string): Subject identifier (<DeptLetter><5-digit code>) or subject_name
+- `subject_name` (string): Elective subject name
+- `teacher` (string): teacher_id who teaches the elective
+- `elective_slots` (multiple columns): Group of columns where:
+  - **Column header** = elective slot name defined in PERIOD sheet under "Pre-place slots"
+  - **Cell value** = 1 (subject offered in this slot) or 0 (not offered)
+  - Example columns: "Elective_Slot_A", "Elective_Slot_B", "Elective_Slot_C"
+- `classroom` (string): Specific required room_id
+
+**Purpose:** Defines which electives are offered in which time slots.
+
+**Example Data:**
+| subject_id | subject_name | teacher | Elective_Slot_A | Elective_Slot_B | Elective_Slot_C | classroom |
+|------------|--------------|---------|-----------------|-----------------|-----------------|-----------|
+| E10001     | Robotics     | T050    | 1               | 0               | 1               | Lab-Tech  |
+| E10002     | Art          | T051    | 0               | 1               | 0               | Art-Room  |
+| E10003     | Music        | E010    | 1               | 1               | 0               | Music-Rm  |
+
+--------------------------------------------------------------------------------
+SHEET 8: SCOUT (Optional)
+--------------------------------------------------------------------------------
+Defines teachers responsible for scout activities by grade level.
+
+**Columns:**
+- `ลูกเสือม.1` (string): List of teacher names assigned to scout activities for grade ม.1
+- `ลูกเสือม.2` (string): List of teacher names assigned to scout activities for grade ม.2
+- `ลูกเสือม.3` (string): List of teacher names assigned to scout activities for grade ม.3
+- (Additional columns for other grades as needed)
+
+**Content Format:**
+- Each cell contains comma-separated teacher names
+- Names should match teacher_name from TEACHER sheet
+
+**Purpose:** Assigns teachers to scout supervision duties.
+
+**Example Data:**
+| ลูกเสือม.1    | ลูกเสือม.2    | ลูกเสือม.3    |
+|---------------|---------------|---------------|
+| John, Sarah   | Mike, Jane    | Robert, Lisa  |
+
+================================================================================
+PERIOD RANGE FORMAT (UNIVERSAL NOTATION)
+================================================================================
+
+This format is used in multiple sheets: PREPLACE (periods column), TEACHER (available_slots, unavailable_slots), and CURRICULUM (fixed_periods).
+
+**Format Rules:**
+1. **Single Slot**: `DAY_PERIOD`
+   - Example: `MON_1` = Monday, Period 1
+   - Example: `FRI_8` = Friday, Period 8
+
+2. **Range on Same Day**: `DAY_START-DAY_END`
+   - Example: `MON_1-MON_3` = Monday, Periods 1, 2, 3
+   - Example: `WED_5-WED_7` = Wednesday, Periods 5, 6, 7
+   - Note: Expands to ALL periods between START and END (inclusive)
+
+3. **Everyday Pattern**: `Everyday_PERIOD`
+   - Example: `Everyday_4` = Period 4 on MON, TUE, WED, THU, FRI
+   - Expands to: MON_4, TUE_4, WED_4, THU_4, FRI_4
+
+4. **Multiple Slots**: Comma-separated combinations
+   - Example: `TUE_2,THU_2` = Tuesday Period 2 AND Thursday Period 2
+   - Example: `MON_1-MON_2,FRI_8` = Monday Periods 1-2 AND Friday Period 8
+
+**Valid Days:** MON, TUE, WED, THU, FRI
+
+**Parsing Logic:**
+- Split by comma first to get individual range expressions
+- For each expression:
+  - If contains "Everyday", expand to all 5 weekdays
+  - If contains "-", expand the range
+  - Otherwise, treat as single slot
+
+================================================================================
+DATA RELATIONSHIPS AND REFERENCES
+================================================================================
+
+**ID References (must match across sheets):**
+- `teacher_id`: TEACHER → CURRICULUM, ELECTIVE, PREPLACE (apply_to), SCOUT
+- `class_id`: STUDENT → PREPLACE (apply_to), CURRICULUM (derived from grade+section)
+- `room_id`: ROOM → STUDENT (default_room), CURRICULUM (classroom), ELECTIVE (classroom)
+- `period_label`: PERIOD → All timetable columns (used to construct period_col)
+- `subject_id`: CURRICULUM, ELECTIVE → Placed in timetable cells
+
+**Grade-Section Relationship:**
+- `class_id` format: "<grade>/<section>"
+- Example: "1/1" means grade ม.1, section 1
+- When PREPLACE apply_to = "ม.1", it affects ALL sections: 1/1, 1/2, 1/3, etc.
+
+**Room Assignment Priority:**
+1. If CURRICULUM.classroom or ELECTIVE.classroom is specified → Use that room
+2. Else if STUDENT.default_room is specified → Use default room
+3. Else → Room assignment is flexible (TBD by main scheduler)
+
+================================================================================
+END OF INPUT DATA DESCRIPTION
+================================================================================

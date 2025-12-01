@@ -1,0 +1,4 @@
+**Step 3: Mark Teacher Availability**
+1. Read the TEACHER sheet.
+2. Internal Teachers (Txxx): Read unavailable_slots and mark these periods as UNAVAILABLE in their schedules.
+3. External Teachers (Exxx): Read available_slots. Mark ALL SLOTS NOT LISTED in this column as UNAVAILABLE.

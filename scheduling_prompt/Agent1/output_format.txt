@@ -1,0 +1,50 @@
+# REQUIRED OUTPUT FORMAT (FINAL TEXT CHUNKS)
+
+Upon receiving the final "EXECUTION CALL" chunk, your ENTIRE RESPONSE MUST BE ONLY THE FOLLOWING CHUNKED TEXT FORMAT. Do not include any other text or code.
+
+**CRITICAL INSTRUCTIONS FOR OUTPUT GRID**:
+- The grid must be a standard CSV format (comma-separated).
+- Student Timetable Cell Value: Show the assigned subject_id or slot_name.
+- Teacher Timetable Cell Value: Show the assigned class_id or slot_name.
+- Room Timetable Cell Value: Show the class_id using the room.
+- Empty slots should remain empty (e.g., , ,).
+- ALWAYS return every single timetable for all Students, Teachers, and Rooms.
+- **DO NOT SUMMARIZE or use ellipses (...)** to skip entries. The output must be returned in its entirety.
+```
+===== Start Students CSV ===== 
+===== Start Class ม.1/1 ===== 
+<after processed Class ม.1/1 csv with step 1 layout>
+===== END Class ม.1/1 ===== 
+===== Start Class ม.1/2 ===== 
+<after processed Class ม.1/2 csv with step 1 layout>
+===== END Class ม.1/2 ===== ... 
+===== End Students CSV =====
+
+===== Start Teachers CSV ===== 
+===== Start Teacher T001 ===== 
+<after processed Teacher T001 csv with step 1 layout>
+===== END Teacher T001 ===== ... 
+===== End Teachers CSV =====
+
+===== Start Rooms CSV ===== 
+===== Start Room R001 ===== 
+<after processed Room R001 csv with step 1 layout>
+===== END Room R001 ===== ... 
+===== End Rooms CSV =====
+
+===== Start Conflicts JSON ===== 
+[ 
+  { 
+    "type": "preplace/elective/scout", 
+    "subject_id": "<subject_id>", 
+    "teacher_id": "<teacher_id>", 
+    "room_id": "<room_id>", 
+    "class_id": "<class_id_or_section>", 
+    "period": "<period_label>", 
+    "existing_value": "<value_already_in_cell>", 
+    "reason": "slot already occupied by <existing_value>" 
+  },
+  ... 
+] 
+===== END Conflicts JSON =====
+```
